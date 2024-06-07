@@ -139,7 +139,8 @@ client.on('messageCreate', async message => {
                     const matchIds = matchResponse.data;
                     console.log(`Match IDs: ${JSON.stringify(matchIds)}`);
                     const laneCounts = {};
-
+                    let realRank = 0;
+                    let count = 0;
                     for (const matchId of matchIds) {
                         console.log(`Fetching match details for matchId: ${matchId}`);
                         const matchDetailsResponse = await axios.get(`https://americas.api.riotgames.com/lol/match/v5/matches/${matchId}`, {
@@ -148,12 +149,47 @@ client.on('messageCreate', async message => {
                             }
                         });
                         const matchDetails = matchDetailsResponse.data;
+
+                        //********Ethan's comment: why are you doing p.puuid, isnt the participant field a vector of puuid already?*********
                         const participant = matchDetails.info.participants.find(p => p.puuid === puuid);
                         const lane = participant.teamPosition.toLowerCase();
                         if (lane && ['top', 'jungle', 'middle', 'bottom', 'support'].includes(lane)) {
                             laneCounts[lane] = (laneCounts[lane] || 0) + 1;
                         }
+
+
+                        // using /lol/match/v5/matches/by-puuid/{puuid}/ids to find preivous 20 matches
+                        // then for each match use /lol/match/v5/matches/{matchId}  .participant to find all the participant (already in puuid)
+                        // find the rank of each paritipant using exisitng method
+
+                        console.log(`Finding all particiapnt in match: ${matchId}`);
+                        const matchParticipants = matchDetails.info.participants;
+                        
+                        for (const participantUid of matchParticipants) {
+                            const participantIDData = await axios.get(`https://na1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${participantUid}`, {
+                            headers: {
+                                'X-Riot-Token': riotApiKey
+                                }    
+                            });
+
+                        const participantId = participantIDData.data.id;
+                        console.log(`Fetching rank for participantId: ${participantId}`);
+                        const pariticipantrankResponse = await axios.get(`https://na1.api.riotgames.com/lol/league/v4/entries/by-summoner/${participantId}`, {
+                            headers: {
+                                'X-Riot-Token': riotApiKey
+                            }
+                            });
+                        const participantRankData = pariticipantrankResponse.data;
+                        console.log(`Rank data: ${JSON.stringify(participantRankData)}`);
+                        const participantRank = participantRankData.length > 0 ? `${participantRankData[0].tier} ${participantRankData[0].rank}` : 'Unranked';
+
+                        if (participantRank != 'Unranked'){
+                            realRank += calculateParticipantSkillScore(participantRank);
+                            count += 1;
+                            }
+                        }
                     }
+                    realRank = realRank/count;
 
                     const sortedLanes = Object.entries(laneCounts).sort(([, a], [, b]) => b - a).map(([lane]) => lane).slice(0, 5);
                     console.log(`Sorted lanes: ${JSON.stringify(sortedLanes)}`);
@@ -177,7 +213,8 @@ client.on('messageCreate', async message => {
                         masteryData,
                         sortedLanes,
                         highestRank,
-                        winRate
+                        winRate,
+                        realRank
                     });
 
                     await summoner.save();
@@ -216,13 +253,7 @@ client.on('messageCreate', async message => {
             message.channel.send(`📋 **Registered Summoners** 📋\n\n${memberList}`);
         }
     }
-    if (message.content.toLowerCase().includes('patrick')|| 
-    message.content.toLowerCase().includes('xiaobai')|| 
-    message.content.toLowerCase().includes('whitegx')|| 
-    message.content.toLowerCase().includes('lzp')|| 
-    message.content.toLowerCase().includes('liaozhipei')) {
-        message.channel.send("闭嘴🤐");
-    }
+
     if (message.content === '!match') {
         if (matchInProgress) {
             message.channel.send('❌ A match is already in progress. Please wait until it is finished.');
@@ -367,6 +398,25 @@ function calculateSkillScore(summoner) {
     return rankScore + championScore + laneScore + winRateScore;
 }
 
+function calculateParticipantSkillScore(participantRank) {
+    const rankScores = {
+        'IRON IV': 1, 'IRON III': 2, 'IRON II': 3, 'IRON I': 4,
+        'BRONZE IV': 5, 'BRONZE III': 6, 'BRONZE II': 7, 'BRONZE I': 8,
+        'SILVER IV': 9, 'SILVER III': 10, 'SILVER II': 11, 'SILVER I': 12,
+        'GOLD IV': 13, 'GOLD III': 14, 'GOLD II': 15, 'GOLD I': 16,
+        'PLATINUM IV': 17, 'PLATINUM III': 18, 'PLATINUM II': 19, 'PLATINUM I': 20,
+        'DIAMOND IV': 21, 'DIAMOND III': 22, 'DIAMOND II': 23, 'DIAMOND I': 24,
+        'MASTER': 25, 'GRANDMASTER': 26, 'CHALLENGER': 27, 'Unranked': 0
+    };
+
+    const rankScore = rankScores[participantRank] || 0;
+    // const championScore = summoner.masteryData.reduce((total, champ) => total + champ.championLevel, 0);
+    // const laneScore = summoner.sortedLanes.length;
+    // const winRateScore = summoner.winRate / 10;
+
+    return rankScore;
+}
+
 // Calculate recent win rate
 async function calculateWinRate(matchIds, puuid) {
     let wins = 0;
@@ -399,3 +449,6 @@ async function movePlayersToChannels(team, channelId) {
 }
 
 client.login(token);
+
+
+
