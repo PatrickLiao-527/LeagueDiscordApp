@@ -1,4 +1,3 @@
-// models/Summoner.js
 const mongoose = require('mongoose');
 
 const summonerSchema = new mongoose.Schema({
@@ -10,7 +9,9 @@ const summonerSchema = new mongoose.Schema({
     highestRank: { type: String, default: 'unknown' },
     lane: { type: String, required: true },
     masteryData: { type: Array, required: true },
-    sortedLanes: { type: Array, required: true }
+    sortedLanes: { type: Array, required: true },
+    winRate: { type: Number, required: true },
+    realRank: { type: Number, required: true }
 });
 
 module.exports = mongoose.model('Summoner', summonerSchema);
