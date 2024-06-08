@@ -151,8 +151,9 @@ const calculateParticipantSkillScore = (participantRank) => {
         'SILVER IV': 9, 'SILVER III': 10, 'SILVER II': 11, 'SILVER I': 12,
         'GOLD IV': 13, 'GOLD III': 14, 'GOLD II': 15, 'GOLD I': 16,
         'PLATINUM IV': 17, 'PLATINUM III': 18, 'PLATINUM II': 19, 'PLATINUM I': 20,
-        'DIAMOND IV': 21, 'DIAMOND III': 22, 'DIAMOND II': 23, 'DIAMOND I': 24,
-        'MASTER': 25, 'GRANDMASTER': 26, 'CHALLENGER': 27, 'Unranked': 0
+        'EMERALD IV': 21, 'EMERALD III': 22, 'EMERALD II': 23, 'EMERALD I': 24,
+        'EMERALD IV': 25, 'EMERALD III': 26, 'EMERALD II': 27, 'EMERALD I': 28,
+        'MASTER': 29, 'GRANDMASTER': 30, 'CHALLENGER': 31, 'Unranked': 0
     };
 
     const score = rankScores[participantRank] || 0;

@@ -7,7 +7,7 @@ const summonerSchema = new mongoose.Schema({
     tagLine: { type: String, required: true },
     puuid: { type: String, required: true },
     highestRank: { type: String, default: 'unknown' },
-    lane: { type: String, required: true },
+    //lane: { type: String, required: true },
     masteryData: { type: Array, required: true },
     sortedLanes: { type: Array, required: true },
     winRate: { type: Number, required: true },

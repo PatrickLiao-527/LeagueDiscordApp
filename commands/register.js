@@ -99,7 +99,7 @@ module.exports = async (client, message) => {
                     sortedLanes,
                     highestRank: summonerRank,
                     winRate,
-                    realRank
+                    realRank,
                 });
 
                 await summoner.save();
