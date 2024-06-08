@@ -37,6 +37,11 @@ const processRegistrationQueue = async () => {
 
         const summonerRank = await fetchSummonerRank(summonerId);
         const masteryData = await fetchTopChampions(puuid);
+        const materyScore = await axios.get(`https://na1.api.riotgames.com/lol/champion-mastery/v4/scores/by-puuid/2${puuid}`, {
+            headers: {
+                'X-Riot-Token': riotApiKey
+            }
+        });
         const matchIds = await fetchMatchIds(puuid);
         const laneCounts = await fetchLaneCounts(matchIds, puuid);
         const winRate = await calculateWinRate(matchIds, puuid);
@@ -69,6 +74,15 @@ const processRegistrationQueue = async () => {
 
         const championList = masteryData.map(champion => `${championIdToName[champion.championId] || 'Unknown Champion'} [Level ${champion.championLevel}]`).join(', ');
 
+        function transferFunction1(x) {
+            console.log(`transferFunction1 input: ${x}`);
+            const result = (1/(-x-1)+1)**2;
+            console.log(`transferFunction1 output: ${result}`);
+            return result;
+          }
+
+        const skillScore = realRank + transferFunction1(materySCore)*20 + winRate / 10
+
         const summoner = new Summoner({
             discordId: message.author.id,
             discordTag: message.author.tag,
@@ -77,10 +91,12 @@ const processRegistrationQueue = async () => {
             puuid,
             lane,
             masteryData,
+            materyScore,
             sortedLanes,
             highestRank: summonerRank,
             winRate,
             realRank,
+            skillScore
         });
 
         await summoner.save();

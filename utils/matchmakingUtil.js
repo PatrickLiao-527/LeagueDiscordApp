@@ -69,20 +69,27 @@ function matchmaking(summoners) {
   // Initialize teams
   const team1 = [];
   const team2 = [];
-
+  let team1TotalScore=100;
+  let team2TotalScore=100;
   // For each index in the list, consider the weights on each summoner
-  for (let i = 0; i < 5; i++) {
-    const weights = summonersWithScoresAndWeights.map(summoner => Math.max(0, summoner.lineWeights[i] || 0));
-    console.log(`Weights for index ${i}: ${weights}`);
+  while(team1TotalScore>50 && team2TotalScore>50 && Math.abs(team2TotalScore-team1TotalScore) <25) {
+    team1TotalScore=0;
+    team2TotalScore=0;
+    for (let i = 0; i < 5; i++) {
+      const weights = summonersWithScoresAndWeights.map(summoner => Math.max(0, summoner.lineWeights[i] || 0));
+      console.log(`Weights for index ${i}: ${weights}`);
 
-    // Randomly choose two summoners based on these weights
-    const index1 = weightedRandomSelection(weights);
-    team1.push(summonersWithScoresAndWeights.splice(index1, 1)[0]);
+      // Randomly choose two summoners based on these weights
+      const index1 = weightedRandomSelection(weights);
+      team1.push(summonersWithScoresAndWeights.splice(index1, 1)[0]);
+      team1TotalScore+=transferFunction1(i)*team1[i].skillScore;
 
-    const newWeights = summonersWithScoresAndWeights.map(summoner => Math.max(0, summoner.lineWeights[i] || 0));
-    console.log(`New Weights for index ${i} after selecting index1: ${newWeights}`);
-    const index2 = weightedRandomSelection(newWeights);
-    team2.push(summonersWithScoresAndWeights.splice(index2, 1)[0]);
+      const newWeights = summonersWithScoresAndWeights.map(summoner => Math.max(0, summoner.lineWeights[i] || 0));
+      console.log(`New Weights for index ${i} after selecting index1: ${newWeights}`);
+      const index2 = weightedRandomSelection(newWeights);
+      team2.push(summonersWithScoresAndWeights.splice(index2, 1)[0]);
+      team2TotalScore+=transferFunction1(i)*team2[i].skillScore;
+    }
   }
 
   console.log('Final Teams:', { team1, team2 });
