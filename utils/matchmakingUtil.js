@@ -1,0 +1,94 @@
+function transferFunction1(x) {
+  console.log(`transferFunction1 input: ${x}`);
+  const result = (Math.log(0.3 * (x + 0.3333)) + 1) / 2;
+  console.log(`transferFunction1 output: ${result}`);
+  return result;
+}
+
+function transferFunction2(x) {
+  console.log(`transferFunction2 input: ${x}`);
+  const result = (Math.pow(1.5, 0.2366 * x) - 1) / 10;
+  console.log(`transferFunction2 output: ${result}`);
+  return result;
+}
+
+function calculateLineSkillScores(summoners) {
+  return summoners.map(summoner => {
+    const { skillScore, sortedLanes } = summoner;
+    console.log(`Calculating line skill scores for summoner ${summoner.gameName} with skillScore ${skillScore} and sortedLanes ${sortedLanes}`);
+    if (!sortedLanes || !Array.isArray(sortedLanes)) {
+      console.error(`Invalid sortedLanes for summoner ${summoner.gameName}: ${sortedLanes}`);
+      return { ...summoner, lineSkillScores: [], lineWeights: [] };
+    }
+    const lineSkillScores = sortedLanes.map((line, index) => {
+      const score = transferFunction1(index) * skillScore;
+      console.log(`Line ${line} skill score for ${summoner.gameName}: ${score}`);
+      return score;
+    });
+    const lineWeights = lineSkillScores.map(score => {
+      const weight = transferFunction2(score);
+      console.log(`Line weight for score ${score} of ${summoner.gameName}: ${weight}`);
+      return weight;
+    });
+    return { ...summoner, lineSkillScores, lineWeights };
+  });
+}
+
+function weightedRandomSelection(weights) {
+  console.log(`Selecting with weights: ${weights}`);
+  const totalWeight = weights.reduce((acc, weight) => acc + Math.max(0, weight || 0), 0);
+  console.log(`Total weight: ${totalWeight}`);
+  if (totalWeight === 0) {
+    console.error(`Invalid total weight: ${totalWeight}`);
+    return 0; // Prevent division by zero or infinite loop
+  }
+  const random = Math.random() * totalWeight;
+  let accumulatedWeight = 0;
+
+  for (let i = 0; i < weights.length; i++) {
+    accumulatedWeight += Math.max(0, weights[i] || 0);
+    if (random <= accumulatedWeight) {
+      console.log(`Selected index ${i} with random ${random} and accumulatedWeight ${accumulatedWeight}`);
+      return i;
+    }
+  }
+
+  return weights.length - 1;
+}
+
+function matchmaking(summoners) {
+  if (summoners.length !== 10) {
+    throw new Error('The list of summoners must have a length of 10.');
+  }
+
+  // Calculate line skill scores and line weights for each summoner
+  const summonersWithScoresAndWeights = calculateLineSkillScores(summoners);
+
+  console.log('Summoners with Scores and Weights:', JSON.stringify(summonersWithScoresAndWeights, null, 2));
+
+  // Initialize teams
+  const team1 = [];
+  const team2 = [];
+
+  // For each index in the list, consider the weights on each summoner
+  for (let i = 0; i < 5; i++) {
+    const weights = summonersWithScoresAndWeights.map(summoner => Math.max(0, summoner.lineWeights[i] || 0));
+    console.log(`Weights for index ${i}: ${weights}`);
+
+    // Randomly choose two summoners based on these weights
+    const index1 = weightedRandomSelection(weights);
+    team1.push(summonersWithScoresAndWeights.splice(index1, 1)[0]);
+
+    const newWeights = summonersWithScoresAndWeights.map(summoner => Math.max(0, summoner.lineWeights[i] || 0));
+    console.log(`New Weights for index ${i} after selecting index1: ${newWeights}`);
+    const index2 = weightedRandomSelection(newWeights);
+    team2.push(summonersWithScoresAndWeights.splice(index2, 1)[0]);
+  }
+
+  console.log('Final Teams:', { team1, team2 });
+  return { team1, team2 };
+}
+
+module.exports = {
+  matchmaking
+};

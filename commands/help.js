@@ -1,7 +1,12 @@
 module.exports = async (client, message) => {
-    message.channel.send(`📜 **Commands** 📜\n
-    \`!register\` - Register your summoner information.
-    \`!remove\` - Remove your summoner information.
-    \`!members\` - List all registered summoners.
-    \`!match\` - Start the team selection process.`);
+    const commandsList = `
+    **Available Commands:**
+    \`!register\` - Register as a new summoner.
+    \`!remove\` - Remove your registration.
+    \`!show\` - Show your current real rank and other information.
+    \`!queue\` - Show the current registration queue.
+    \`!help\` - Show the list of available commands.
+    `;
+
+    message.channel.send(commandsList);
 };

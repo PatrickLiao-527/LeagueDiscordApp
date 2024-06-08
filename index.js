@@ -1,6 +1,9 @@
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const mongoose = require('mongoose');
 require('dotenv').config();
+
+console.log('RIOT_API_KEY:', process.env.RIOT_API_KEY);
+console.log('DISCORD_BOT_TOKEN:', process.env.DISCORD_BOT_TOKEN);
 
 const client = new Client({
     intents: [
@@ -26,24 +29,36 @@ const matchHandler = require('./commands/match');
 const membersHandler = require('./commands/members');
 const removeHandler = require('./commands/remove');
 const helpHandler = require('./commands/help');
+const showCommand = require('./commands/show');
+const queueCommand = require('./commands/queue');
+
+// Collection to hold commands
+client.commands = new Collection();
+client.commands.set('help', helpHandler);
+client.commands.set('register', registerHandler);
+client.commands.set('remove', removeHandler);
+client.commands.set('show', showCommand);
+client.commands.set('queue', queueCommand);
+client.commands.set('match',matchHandler);
 
 client.once('ready', () => {
     console.log('Bot is online!');
 });
 
-client.on('messageCreate', async message => {
-    if (message.content === '!register') {
-        await registerHandler(client, message);
-    } else if (message.content === '!members') {
-        await membersHandler(client, message);
-    } else if (message.content.toLowerCase().includes('patrick')) {
-        message.channel.send("闭嘴🤐");
-    } else if (message.content === '!match') {
-        await matchHandler(client, message);
-    } else if (message.content === '!remove') {
-        await removeHandler(client, message);
-    } else if (message.content === '!help') {
-        await helpHandler(client, message);
+client.on('interactionCreate', async interaction => {
+    if (!interaction.isCommand()) return;
+
+    const command = client.commands.get(interaction.commandName);
+
+    if (!command) {
+        return;
+    }
+
+    try {
+        await command.execute(client, interaction);
+    } catch (error) {
+        console.error(error);
+        await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
     }
 });
 
