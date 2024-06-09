@@ -40,7 +40,7 @@ function weightedRandomSelection(weights) {
   console.log(`Total weight: ${totalWeight}`);
   if (totalWeight === 0) {
     console.error(`Invalid total weight: ${totalWeight}`);
-    return 0; // Prevent division by zero or infinite loop
+    return Math.floor(Math.random() * weights.length); // Fallback selection
   }
   const random = Math.random() * totalWeight;
   let accumulatedWeight = 0;
@@ -62,19 +62,23 @@ function matchmaking(summoners) {
   }
 
   // Calculate line skill scores and line weights for each summoner
-  const summonersWithScoresAndWeights = calculateLineSkillScores(summoners);
+  const summonersWithScoresAndWeights = calculateLineSkillScores(summoners.map(summoner => summoner.toObject()));
 
   console.log('Summoners with Scores and Weights:', JSON.stringify(summonersWithScoresAndWeights, null, 2));
 
   // Initialize teams
   const team1 = [];
   const team2 = [];
-  let team1TotalScore=100;
-  let team2TotalScore=100;
+  let team1TotalScore = 100;
+  let team2TotalScore = 100;
+  let attempts = 0;
+  const maxAttempts = 100; // Safeguard to prevent infinite loop
+
   // For each index in the list, consider the weights on each summoner
-  while(team1TotalScore>50 && team2TotalScore>50 && Math.abs(team2TotalScore-team1TotalScore) <25) {
-    team1TotalScore=0;
-    team2TotalScore=0;
+  while (team1TotalScore > 50 && team2TotalScore > 50 && Math.abs(team2TotalScore - team1TotalScore) < 25 && attempts < maxAttempts) {
+    team1TotalScore = 0;
+    team2TotalScore = 0;
+    attempts++;
     for (let i = 0; i < 5; i++) {
       const weights = summonersWithScoresAndWeights.map(summoner => Math.max(0, summoner.lineWeights[i] || 0));
       console.log(`Weights for index ${i}: ${weights}`);
@@ -82,14 +86,18 @@ function matchmaking(summoners) {
       // Randomly choose two summoners based on these weights
       const index1 = weightedRandomSelection(weights);
       team1.push(summonersWithScoresAndWeights.splice(index1, 1)[0]);
-      team1TotalScore+=transferFunction1(i)*team1[i].skillScore;
+      team1TotalScore += transferFunction1(i) * team1[team1.length - 1].skillScore;
 
       const newWeights = summonersWithScoresAndWeights.map(summoner => Math.max(0, summoner.lineWeights[i] || 0));
       console.log(`New Weights for index ${i} after selecting index1: ${newWeights}`);
       const index2 = weightedRandomSelection(newWeights);
       team2.push(summonersWithScoresAndWeights.splice(index2, 1)[0]);
-      team2TotalScore+=transferFunction1(i)*team2[i].skillScore;
+      team2TotalScore += transferFunction1(i) * team2[team2.length - 1].skillScore;
     }
+  }
+
+  if (attempts >= maxAttempts) {
+    console.error('Max attempts reached, exiting loop to prevent infinite execution.');
   }
 
   console.log('Final Teams:', { team1, team2 });

@@ -10,7 +10,7 @@ const {
     calculateParticipantSkillScore,
     fetchSummonerByPuuid
 } = require('../utils/riotAPIUtils');
-const { championIdToName, fetchChampionData } = require('../utils/championIdToName'); 
+const { championIdToName, fetchChampionData } = require('../utils/championIdToName');
 const riotApiKey = process.env.RIOT_API_KEY;
 
 let registerQueue = []; // Initialize the register queue
@@ -22,7 +22,7 @@ const processRegistrationQueue = async () => {
     }
 
     registerInProgress = true;
-    const { client, message, lane, gameName, tagLine } = registerQueue.shift();
+    const { interaction, lane, gameName, tagLine } = registerQueue.shift();
 
     try {
         await fetchChampionData(); // Fetch and map champion data
@@ -37,7 +37,7 @@ const processRegistrationQueue = async () => {
 
         const summonerRank = await fetchSummonerRank(summonerId);
         const masteryData = await fetchTopChampions(puuid);
-        const materyScore = await axios.get(`https://na1.api.riotgames.com/lol/champion-mastery/v4/scores/by-puuid/2${puuid}`, {
+        const masteryScore = await axios.get(`https://na1.api.riotgames.com/lol/champion-mastery/v4/scores/by-puuid/${puuid}`, {
             headers: {
                 'X-Riot-Token': riotApiKey
             }
@@ -76,22 +76,22 @@ const processRegistrationQueue = async () => {
 
         function transferFunction1(x) {
             console.log(`transferFunction1 input: ${x}`);
-            const result = (1/(-x-1)+1)**2;
+            const result = (1 / (-x - 1) + 1) ** 2;
             console.log(`transferFunction1 output: ${result}`);
             return result;
-          }
+        }
 
-        const skillScore = realRank + transferFunction1(materySCore)*20 + winRate / 10
+        const skillScore = realRank + transferFunction1(masteryScore.data) * 20 + winRate / 10;
 
         const summoner = new Summoner({
-            discordId: message.author.id,
-            discordTag: message.author.tag,
+            discordId: interaction.user.id,
+            discordTag: interaction.user.tag,
             gameName,
             tagLine,
             puuid,
             lane,
             masteryData,
-            materyScore,
+            masteryScore: masteryScore.data,
             sortedLanes,
             highestRank: summonerRank,
             winRate,
@@ -101,74 +101,78 @@ const processRegistrationQueue = async () => {
 
         await summoner.save();
 
-        message.channel.send(`🎉 **Registration Complete!** 🎉\n\n**Lane:** ${lane}\n**Summoner Name:** ${gameName}#${tagLine}\n**Highest Rank:** ${summonerRank}\n**Top Champions:** ${championList}\n**Top Lanes:** ${sortedLanes.join(', ')}\n**Recent Win Rate:** ${winRate}%\n**Real Rank:** ${realRank}`);
-        displayQueue(message); // Show the queue list after registration
+        await interaction.followUp(`🎉 **Registration Complete!** 🎉\n\n**Lane:** ${lane}\n**Summoner Name:** ${gameName}#${tagLine}\n**Highest Rank:** ${summonerRank}\n**Top Champions:** ${championList}\n**Top Lanes:** ${sortedLanes.join(', ')}\n**Recent Win Rate:** ${winRate}%\n**Real Rank:** ${realRank}`);
+        displayQueue(interaction.channel); // Show the queue list after registration
     } catch (error) {
         console.error('Error fetching data from Riot API:', error.response ? error.response.data : error.message);
-        message.channel.send(`Failed to fetch summoner data for ${gameName}#${tagLine}: ${error.response ? error.response.data.status.message : error.message}`);
+        await interaction.followUp(`Failed to fetch summoner data for ${gameName}#${tagLine}: ${error.response ? error.response.data.status.message : error.message}`);
     } finally {
         registerInProgress = false; // Release the lock
         processRegistrationQueue(); // Process the next user in the queue
     }
 };
 
-const displayQueue = (message) => {
-    const queueList = registerQueue.map((entry, index) => `${index + 1}. ${entry.message.author.username}`).join('\n');
-    message.channel.send(`📋 **Current Registration Queue:**\n${queueList}`);
+const displayQueue = (channel) => {
+    const queueList = registerQueue.map((entry, index) => `${index + 1}. ${entry.interaction.user.username}`).join('\n');
+    channel.send(`📋 **Current Registration Queue:**\n${queueList}`);
 };
 
-module.exports = async (client, message) => {
-    const existingSummoner = await Summoner.findOne({ discordId: message.author.id });
-    if (existingSummoner) {
-        message.channel.send(`You are already registered as ${existingSummoner.gameName}#${existingSummoner.tagLine}. Use !remove to delete your information.`);
-        return;
-    }
-
-    message.channel.send('Please enter the lane you want to play [Top, Jg, Mid, Bot, Sup]:');
-
-    const filter = m => m.author.id === message.author.id;
-    const laneCollector = message.channel.createMessageCollector({ filter, max: 1, time: 30000 });
-
-    laneCollector.on('collect', m => {
-        const lane = m.content.trim().toLowerCase();
-        const validLanes = ['top', 'jg', 'mid', 'bot', 'sup'];
-
-        if (!validLanes.includes(lane)) {
-            message.channel.send('Invalid lane. Please enter one of the following lanes: [Top, Jg, Mid, Bot, Sup]');
+module.exports = {
+    name: 'register',
+    description: 'Register as a new summoner',
+    async execute(interaction) {
+        const existingSummoner = await Summoner.findOne({ discordId: interaction.user.id });
+        if (existingSummoner) {
+            await interaction.reply(`You are already registered as ${existingSummoner.gameName}#${existingSummoner.tagLine}. Use /remove to delete your information.`);
             return;
         }
 
-        message.channel.send('Please enter your summoner name and tagline in the format gameName#tagLine:');
+        await interaction.reply('Please enter the lane you want to play [Top, Jg, Mid, Bot, Sup]:');
 
-        const summonerCollector = message.channel.createMessageCollector({ filter, max: 1, time: 60000 });
+        const filter = response => response.author.id === interaction.user.id;
+        const laneCollector = interaction.channel.createMessageCollector({ filter, max: 1, time: 30000 });
 
-        summonerCollector.on('collect', m => {
-            const [gameName, tagLine] = m.content.split('#');
+        laneCollector.on('collect', async response => {
+            const lane = response.content.trim().toLowerCase();
+            const validLanes = ['top', 'jg', 'mid', 'bot', 'sup'];
 
-            if (!gameName || !tagLine) {
-                message.channel.send('Invalid format. Please enter your summoner name and tagline in the format gameName#tagLine.');
+            if (!validLanes.includes(lane)) {
+                await interaction.followUp('Invalid lane. Please enter one of the following lanes: [Top, Jg, Mid, Bot, Sup]');
                 return;
             }
 
-            message.channel.send(`🔍 You will be added to the registration queue. Please wait...\n🔍 Fetching your data, please wait... 🕵️‍♂️`);
+            await interaction.followUp('Please enter your summoner name and tagline in the format gameName#tagLine:');
 
-            registerQueue.push({ client, message, lane, gameName, tagLine });
-            displayQueue(message); // Show the queue list
-            processRegistrationQueue(); // Process the registration queue
+            const summonerCollector = interaction.channel.createMessageCollector({ filter, max: 1, time: 60000 });
+
+            summonerCollector.on('collect', async response => {
+                const [gameName, tagLine] = response.content.split('#');
+
+                if (!gameName || !tagLine) {
+                    await interaction.followUp('Invalid format. Please enter your summoner name and tagline in the format gameName#tagLine.');
+                    return;
+                }
+
+                await interaction.followUp(`🔍 You will be added to the registration queue. Please wait...\n🔍 Fetching your data, please wait... 🕵️‍♂️`);
+
+                registerQueue.push({ interaction, lane, gameName, tagLine });
+                displayQueue(interaction.channel); // Show the queue list
+                processRegistrationQueue(); // Process the registration queue
+            });
+
+            summonerCollector.on('end', collected => {
+                if (collected.size === 0) {
+                    interaction.followUp('You did not enter your summoner name in time.');
+                }
+            });
         });
 
-        summonerCollector.on('end', collected => {
+        laneCollector.on('end', collected => {
             if (collected.size === 0) {
-                message.channel.send('You did not enter your summoner name in time.');
+                interaction.followUp('You did not enter your lane in time.');
             }
         });
-    });
-
-    laneCollector.on('end', collected => {
-        if (collected.size === 0) {
-            message.channel.send('You did not enter your lane in time.');
-        }
-    });
+    },
 };
 
 // Export registerQueue so it can be used in other command files

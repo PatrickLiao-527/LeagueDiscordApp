@@ -2,9 +2,6 @@ const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-console.log('RIOT_API_KEY:', process.env.RIOT_API_KEY);
-console.log('DISCORD_BOT_TOKEN:', process.env.DISCORD_BOT_TOKEN);
-
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -39,7 +36,8 @@ client.commands.set('register', registerHandler);
 client.commands.set('remove', removeHandler);
 client.commands.set('show', showCommand);
 client.commands.set('queue', queueCommand);
-client.commands.set('match',matchHandler);
+client.commands.set('match', matchHandler);
+client.commands.set('members', membersHandler);
 
 client.once('ready', () => {
     console.log('Bot is online!');
@@ -55,10 +53,14 @@ client.on('interactionCreate', async interaction => {
     }
 
     try {
-        await command.execute(client, interaction);
+        await command.execute(interaction);
     } catch (error) {
         console.error(error);
-        await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+        if (!interaction.replied) {
+            await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+        } else {
+            await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+        }
     }
 });
 

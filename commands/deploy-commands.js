@@ -22,6 +22,14 @@ const commands = [
     {
         name: 'queue',
         description: 'Show the current registration queue'
+    },
+    {
+        name: 'members',
+        description: 'Show the current list of registered summoners'
+    },
+    {
+        name: 'match',
+        description: 'Initiates a matchmaking'
     }
 ];
 

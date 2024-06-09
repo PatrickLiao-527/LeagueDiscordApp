@@ -4,12 +4,12 @@ const { championIdToName, fetchChampionData } = require('../utils/championIdToNa
 module.exports = {
     name: 'show',
     description: 'Show your current real rank and other information',
-    async execute(client, interaction) {
+    async execute(interaction) {
         await fetchChampionData(); // Ensure champion data is fetched and mapped before listing members
         try {
             const summoner = await Summoner.findOne({ discordId: interaction.user.id });
             if (!summoner) {
-                interaction.reply('You are not registered yet. Use the !register command to register.');
+                await interaction.reply('You are not registered yet. Use the /register command to register.');
                 return;
             }
 
@@ -29,10 +29,10 @@ module.exports = {
                 ],
             };
 
-            interaction.reply({ embeds: [embed] });
+            await interaction.reply({ embeds: [embed] });
         } catch (error) {
             console.error('Error fetching summoner data:', error.message);
-            interaction.reply('An error occurred while fetching your summoner data. Please try again later.');
+            await interaction.reply('An error occurred while fetching your summoner data. Please try again later.');
         }
     }
 };
