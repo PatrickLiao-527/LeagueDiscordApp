@@ -26,8 +26,10 @@ module.exports = {
                     { name: 'Top Champions', value: topChampions, inline: false },
                     { name: 'Recent Win Rate', value: `${summoner.winRate}%`, inline: true },
                     { name: 'Real Rank ID', value: summoner.realRank.toString(), inline: true },
+                    { name: 'Bias Level', value: summoner.bias !== undefined ? summoner.bias.toString() : 'No Bias', inline: true }
                 ],
             };
+                
 
             await interaction.reply({ embeds: [embed] });
         } catch (error) {

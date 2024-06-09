@@ -28,7 +28,7 @@ const removeHandler = require('./commands/remove');
 const helpHandler = require('./commands/help');
 const showCommand = require('./commands/show');
 const queueCommand = require('./commands/queue');
-const biasCommand = require('./commands/bias')
+const biasHandler = require('./commands/bias')
 
 // Collection to hold commands
 client.commands = new Collection();

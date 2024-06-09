@@ -1,3 +1,5 @@
+const Summoner = require('../models/summoners');
+
 module.exports = {
     name: 'bias',
     description: 'Create a bias on your performance',
@@ -9,17 +11,31 @@ module.exports = {
                 return;
             }
 
-            await interaction.reply('Please enter your bias:');
-            const biasCollector = interaction.channel.createMessageCollector({ filter, max: 1, time: 60000 });
+            await interaction.reply('Please enter your bias value:');
+            
+            const filter = response => response.author.id === interaction.user.id;
+            const collector = interaction.channel.createMessageCollector({ filter, max: 1, time: 60000 });
 
-            await Summoner.deleteOne({ discordId: interaction.user.id });
-            existingSummoner.bias = parseInt(biasCollector);
+            collector.on('collect', async response => {
+                const biasValue = parseInt(response.content, 10);
+                if (isNaN(biasValue)) {
+                    await interaction.followUp('Invalid bias value. Please enter a valid number.');
+                } else {
+                    existingSummoner.bias = biasValue;
+                    await existingSummoner.save();
+                    await interaction.followUp(`Your bias has been updated to ${biasValue}.`);
+                }
+            });
 
-            await summoner.save();
+            collector.on('end', collected => {
+                if (collected.size === 0) {
+                    interaction.followUp('You did not enter a bias value in time.');
+                }
+            });
 
         } catch (error) {
-            console.error('Error removing summoner data:', error.message);
-            await interaction.reply('An error occurred while trying to delete your data. Please try again later.');
+            console.error('Error updating bias:', error.message);
+            await interaction.reply('An error occurred while trying to update your bias. Please try again later.');
         }
     },
 };
