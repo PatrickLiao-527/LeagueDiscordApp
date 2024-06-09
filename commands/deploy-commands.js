@@ -30,6 +30,10 @@ const commands = [
     {
         name: 'match',
         description: 'Initiates a matchmaking'
+    },
+    {
+        name: 'bias',
+        description: 'Create a bias on your performance'
     }
 ];
 

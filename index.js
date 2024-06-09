@@ -28,6 +28,7 @@ const removeHandler = require('./commands/remove');
 const helpHandler = require('./commands/help');
 const showCommand = require('./commands/show');
 const queueCommand = require('./commands/queue');
+const biasCommand = require('./commands/bias')
 
 // Collection to hold commands
 client.commands = new Collection();
@@ -38,6 +39,7 @@ client.commands.set('show', showCommand);
 client.commands.set('queue', queueCommand);
 client.commands.set('match', matchHandler);
 client.commands.set('members', membersHandler);
+client.commands.set('bias', biasHandler);
 
 client.once('ready', () => {
     console.log('Bot is online!');

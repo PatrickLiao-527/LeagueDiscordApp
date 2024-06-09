@@ -5,7 +5,7 @@ const calculateSkillScore = (summoner) => {
     const championScore = summoner.masteryData.reduce((total, champ) => total + champ.championLevel, 0);
     const winRateScore = summoner.winRate / 10;
 
-    return rankScore + championScore + winRateScore;
+    return rankScore + championScore + winRateScore + summoner.bias;
 };
 
 module.exports = { calculateSkillScore };

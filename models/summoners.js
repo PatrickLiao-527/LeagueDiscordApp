@@ -12,7 +12,8 @@ const summonerSchema = new mongoose.Schema({
     sortedLanes: { type: Array, required: true },
     winRate: { type: Number, required: true },
     realRank: { type: Number, required: true },
-    skillScore: { type: Number, required: true }
+    skillScore: { type: Number, required: true },
+    bias: { type: Number, required: false }
 });
 
 module.exports = mongoose.model('Summoner', summonerSchema);
