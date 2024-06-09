@@ -11,7 +11,7 @@ module.exports = {
         \`/help\` - Show the list of available commands.
         \`/match\` - Initiate a matchmaking in the lobby.
         \`/members\` - Show the list of registered summoners.
-        \`/bias\` - Chnage your performance bias.
+        \`/bias\` - Change your performance bias.
         `;
 
         await interaction.reply(commandsList);
