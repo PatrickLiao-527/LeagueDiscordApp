@@ -81,7 +81,7 @@ const processRegistrationQueue = async () => {
             return result;
         }
 
-        const skillScore = realRank + transferFunction1(masteryScore.data) * 20 + winRate / 10;
+        const skillScore = realRank + transferFunction1(masteryScore.data/100) * 20 + winRate / 10;
 
         const summoner = new Summoner({
             discordId: interaction.user.id,

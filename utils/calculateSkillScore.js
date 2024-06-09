@@ -1,11 +1,12 @@
-// this needs to change
+function transferFunction3(x) {
+    console.log(`transferFunction1 input: ${x}`);
+    const result = (1 / (-x - 1) + 1) ** 2;
+    console.log(`transferFunction1 output: ${result}`);
+    return result;
+}
 
 const calculateSkillScore = (summoner) => {
-    const rankScore = summoner.realRank
-    const championScore = summoner.masteryData.reduce((total, champ) => total + champ.championLevel, 0);
-    const winRateScore = summoner.winRate / 10;
-
-    return rankScore + championScore + winRateScore + summoner.bias;
+    return summoner.realRank + transferFunction3(masteryScore.data/100) * 20 + summoner.winRate / 10;
 };
 
 module.exports = { calculateSkillScore };
