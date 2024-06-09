@@ -6,7 +6,7 @@ function transferFunction3(x) {
 }
 
 const calculateSkillScore = (summoner) => {
-    return summoner.realRank + transferFunction3(masteryScore.data/100) * 20 + summoner.winRate / 10;
+    return summoner.realRank + transferFunction3(masteryScore.data/100) * 20 + summoner.winRate / 10 + summoner.bias;
 };
 
 module.exports = { calculateSkillScore };
