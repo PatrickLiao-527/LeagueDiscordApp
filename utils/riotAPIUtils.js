@@ -164,6 +164,7 @@ const fetchSummonerByPuuid = async (puuid) => {
     try {
         const url = `https://na1.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${puuid}`;
         console.log(`Fetching summoner by PUUID from URL: ${url}`);
+        console.log(`Using Riot API Key: ${riotApiKey}`);
         await delay(1000); // Adding delay
         const response = await axios.get(url, {
             headers: {
@@ -173,6 +174,7 @@ const fetchSummonerByPuuid = async (puuid) => {
         console.log(`Fetched summoner by PUUID: ${JSON.stringify(response.data)}`);
         return response.data;
     } catch (error) {
+        console.error('Error fetching summoner by PUUID:', error.message);
         await handleRateLimit(error);
         return fetchSummonerByPuuid(puuid);
     }

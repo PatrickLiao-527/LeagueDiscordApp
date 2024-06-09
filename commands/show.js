@@ -25,10 +25,12 @@ module.exports = {
                     { name: 'Highest Rank', value: summoner.highestRank || 'Unranked', inline: true },
                     { name: 'Top Champions', value: topChampions, inline: false },
                     { name: 'Recent Win Rate', value: `${summoner.winRate}%`, inline: true },
-                    { name: 'Real Rank ID', value: summoner.realRank.toString(), inline: true },
-                    { name: 'Bias Level', value: summoner.bias !== undefined ? summoner.bias.toString() : 'No Bias', inline: true }
+                    { name: 'Real Rank', value: Math.round(summoner.realRank).toString(), inline: true },
+                    { name: 'Bias Level', value: summoner.bias !== undefined ? summoner.bias.toString() : 'No Bias', inline: true },
+                    { name: 'Current Skill Score', value: Math.round(summoner.skillScore).toString(), inline: true }
                 ],
             };
+                
                 
 
             await interaction.reply({ embeds: [embed] });

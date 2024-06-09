@@ -9,7 +9,6 @@ const fetchChampionData = async () => {
         for (const champion in champions) {
             championIdToName[champions[champion].key] = champions[champion].name;
         }
-        console.log('Champion data fetched and mapped:', championIdToName);
     } catch (error) {
         console.error('Error fetching champion data:', error.response ? error.response.data : error.message);
     }

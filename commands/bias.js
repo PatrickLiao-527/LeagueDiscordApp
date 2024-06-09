@@ -1,5 +1,5 @@
 const Summoner = require('../models/summoners');
-
+const {calculateSkillScore} = require('../utils/calculateSkillScore'); // Adjusted import
 module.exports = {
     name: 'bias',
     description: 'Create a bias on your performance',
@@ -22,8 +22,9 @@ module.exports = {
                     await interaction.followUp('Invalid bias value. Please enter a valid number.');
                 } else {
                     existingSummoner.bias = biasValue;
+                    existingSummoner.skillScore = calculateSkillScore(existingSummoner); // Recalculate skill score
                     await existingSummoner.save();
-                    await interaction.followUp(`Your bias has been updated to ${biasValue}.`);
+                    await interaction.followUp(`Your bias has been updated to ${biasValue} and your skill score recalculated.`);
                 }
             });
 
