@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ButtonStyle } = require('discord.js');
 const Summoner = require('../models/summoners');
 const { calculateSkillScore } = require('../utils/calculateSkillScore');
 const { matchmaking } = require('../utils/matchmakingUtil');
@@ -35,15 +35,18 @@ const handleReactionAdd = async (reaction, user) => {
             queue.push(user);
             await updateQueueMessage(reaction.message.channel);
 
-            if (queue.length >= 10) {
+            if (queue.length >= 10 && !matchInProgress) {
+                matchInProgress = true; // Set the flag to indicate a match is in progress
+
                 // We have enough players, start matchmaking
                 const participants = queue.slice(0, 10);
                 queue = queue.slice(10); // Remove the matched players from the queue
                 await updateQueueMessage(reaction.message.channel); // Update queue message after removing matched players
 
-                participants.forEach(participant => {
+                for (const participant of participants) {
                     participant.skillScore = calculateSkillScore(participant);
-                });
+                    console.log(`Participant: ${participant.gameName}#${participant.tagLine}, Skill Score: ${participant.skillScore}`);
+                }
 
                 const { team1, team2 } = matchmaking(participants);
 
@@ -55,6 +58,7 @@ const handleReactionAdd = async (reaction, user) => {
                 };
 
                 await reaction.message.channel.send(`**Team 1**:\n${formatTeam(team1)}\n\n**Team 2**:\n${formatTeam(team2)}`);
+                matchInProgress = false; // Reset the flag after matchmaking is done
             }
         } else {
             await reaction.message.channel.send(`${user.tag}, you are already in the queue!`);
@@ -74,6 +78,35 @@ const handleReactionRemove = async (reaction, user) => {
     }
 };
 
+const handleFetchSummoners = async (interaction) => {
+    console.log('Fetching summoners from database...');
+    const summoners = await Summoner.find({}).limit(10).exec();
+    const fetchedSummoners = summoners.map(summoner => {
+        console.log(`Fetched Summoner: ${summoner.gameName}#${summoner.tagLine}`);
+        return summoner;
+    });
+    if (fetchedSummoners.length < 10) {
+        await interaction.channel.send('Not enough summoners registered for matchmaking.');
+        return;
+    }
+
+    for (const summoner of fetchedSummoners) {
+        summoner.skillScore = calculateSkillScore(summoner);
+        console.log(`Fetched Summoner: ${summoner.gameName}#${summoner.tagLine}, Skill Score: ${summoner.skillScore}`);
+    }
+
+    const { team1, team2 } = matchmaking(fetchedSummoners);
+
+    const formatTeam = team => {
+        return team.map(summoner => {
+            const championList = summoner.masteryData.slice(0, 3).map(champion => `${championIdToName[champion.championId] || 'Unknown Champion'} [Level ${champion.championLevel}]`).join(', ');
+            return `**${summoner.gameName}#${summoner.tagLine}**\n**Lane:** ${summoner.sortedLanes.join(', ')}\n**Top Champions:** ${championList}\n**Recent Win Rate:** ${summoner.winRate}%\n**Real Rank:** ${summoner.realRank}`;
+        }).join('\n\n');
+    };
+
+    await interaction.channel.send(`**Team 1**:\n${formatTeam(team1)}\n\n**Team 2**:\n${formatTeam(team2)}`);
+};
+
 module.exports = {
     name: 'match',
     description: 'Initiate a matchmaking process in the lobby.',
@@ -83,7 +116,14 @@ module.exports = {
             .setTitle('Matchmaking Queue')
             .setDescription('React to this message to join the matchmaking queue. We need 10 players to start the match.');
 
-        const message = await interaction.reply({ embeds: [embed], fetchReply: true });
+        const button = new ButtonBuilder()
+            .setCustomId('fetchSummoners')
+            .setLabel('Fetch Summoners')
+            .setStyle(ButtonStyle.Primary);
+
+        const row = new ActionRowBuilder().addComponents(button);
+
+        const message = await interaction.reply({ embeds: [embed], components: [row], fetchReply: true });
 
         // Set QUEUE_MESSAGE_ID for further updates
         process.env.QUEUE_MESSAGE_ID = message.id;
@@ -104,6 +144,19 @@ module.exports = {
 
         collector.on('end', collected => {
             console.log(`Collected ${collected.size} reactions`);
+        });
+
+        const buttonCollector = message.createMessageComponentCollector({ componentType: 'BUTTON', time: 60000 });
+
+        buttonCollector.on('collect', async i => {
+            if (i.customId === 'fetchSummoners') {
+                await handleFetchSummoners(i);
+                await i.reply({ content: 'Summoners fetched and matchmaking initiated.', ephemeral: true });
+            }
+        });
+
+        buttonCollector.on('end', collected => {
+            console.log(`Button collector ended after collecting ${collected.size} interactions`);
         });
     },
     handleReactionAdd,
