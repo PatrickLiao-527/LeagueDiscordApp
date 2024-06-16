@@ -101,7 +101,7 @@ function matchmaking(summoners) {
   }
 
   console.log('Final Teams:', { team1, team2 });
-  return { team1, team2 };
+  return { team1, team2, team1TotalScore, team2TotalScore };
 }
 
 module.exports = {
