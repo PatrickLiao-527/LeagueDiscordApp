@@ -79,13 +79,15 @@ function matchmaking(summoners) {
   // Initialize teams
   const team1 = [];
   const team2 = [];
-  let team1TotalScore = 100;
-  let team2TotalScore = 100;
+  let team1TotalScore = 0;
+  let team2TotalScore = 0;
   let attempts = 0;
   const maxAttempts = 100; // Safeguard to prevent infinite loop
 
   // For each index in the list, consider the weights on each summoner
-  while (team1TotalScore > 50 && team2TotalScore > 50 && Math.abs(team2TotalScore - team1TotalScore) < 25 && attempts < maxAttempts) {
+  while (team1TotalScore < 50 && team2TotalScore < 50 && Math.abs(team2TotalScore - team1TotalScore) > 25 && attempts < maxAttempts) {
+    team1 = [];
+    team2 = [];
     team1TotalScore = 0;
     team2TotalScore = 0;
     attempts++;
