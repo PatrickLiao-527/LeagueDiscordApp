@@ -1,13 +1,13 @@
 function transferFunction1(x) {
   console.log(`transferFunction1 input: ${x}`);
-  const result = (Math.log(0.3 * (x + 0.3333)) + 1) / 2;
+  const result = (Math.log(0.4 * (x + 0.3)) + 10.88);
   console.log(`transferFunction1 output: ${result}`);
   return result;
 }
 
 function transferFunction2(x) {
   console.log(`transferFunction2 input: ${x}`);
-  const result = (Math.pow(1.5, 0.2366 * x) - 1) / 10;
+  const result = (Math.pow(1.5, 0.29 * x) - 1) / 10;
   console.log(`transferFunction2 output: ${result}`);
   return result;
 }
@@ -20,9 +20,9 @@ function calculateLineSkillScores(summoners) {
       console.error(`Invalid sortedLanes for summoner ${summoner.gameName}: ${sortedLanes}`);
       return { ...summoner, lineSkillScores: [], lineWeights: [] };
     }
-    const lineSkillScores = sortedLanes.map((line, index) => {
-      const score = transferFunction1(index) * skillScore;
-      console.log(`Line ${line} skill score for ${summoner.gameName}: ${score}`);
+    const lineSkillScores = sortedLanes.map(line => {
+      const score = transferFunction1(line) * skillScore;
+      console.log(`Line skill score for ${summoner.gameName}: ${score}`);
       return score;
     });
     const lineWeights = lineSkillScores.map(score => {
@@ -96,13 +96,13 @@ function matchmaking(summoners) {
       // Randomly choose two summoners based on these weights
       const index1 = weightedRandomSelection(weights);
       team1.push(summonersWithScoresAndWeights.splice(index1, 1)[0]);
-      team1TotalScore += transferFunction1(i) * team1[team1.length - 1].skillScore;
+      team1TotalScore += transferFunction1(team1[team1.length -1].sortedLanes[i]) * team1[team1.length - 1].skillScore;
 
       const newWeights = summonersWithScoresAndWeights.map(summoner => Math.max(0, summoner.lineWeights[i] || 0));
       console.log(`New Weights for index ${i} after selecting index1: ${newWeights}`);
       const index2 = weightedRandomSelection(newWeights);
       team2.push(summonersWithScoresAndWeights.splice(index2, 1)[0]);
-      team2TotalScore += transferFunction1(i) * team2[team2.length - 1].skillScore;
+      team2TotalScore += transferFunction1(team2[team2.length -1].sortedLanes[i]) * team2[team2.length - 1].skillScore;
     }
   }
 
