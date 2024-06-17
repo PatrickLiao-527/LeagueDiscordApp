@@ -79,13 +79,15 @@ function matchmaking(summoners) {
   // Initialize teams
   const team1 = [];
   const team2 = [];
-  let team1TotalScore = 100;
-  let team2TotalScore = 100;
+  let team1TotalScore = 0;
+  let team2TotalScore = 0;
   let attempts = 0;
   const maxAttempts = 10000000000; // Safeguard to prevent infinite loop
 
   // For each index in the list, consider the weights on each summoner
-  while (team1TotalScore > 50 && team2TotalScore > 50 && Math.abs(team2TotalScore - team1TotalScore) < 50 && attempts < maxAttempts) {
+  while (team1TotalScore < 50 && team2TotalScore < 50 && Math.abs(team2TotalScore - team1TotalScore) > 25 && attempts < maxAttempts) {
+    team1 = [];
+    team2 = [];
     team1TotalScore = 0;
     team2TotalScore = 0;
     attempts++;
@@ -95,14 +97,25 @@ function matchmaking(summoners) {
 
       // Randomly choose two summoners based on these weights
       const index1 = weightedRandomSelection(weights);
+      if(i%2==0){
       team1.push(summonersWithScoresAndWeights.splice(index1, 1)[0]);
       team1TotalScore += transferFunction1(team1[team1.length -1].sortedLanes[i]) * team1[team1.length - 1].skillScore;
-
+      }
+      else{
+        team2.push(summonersWithScoresAndWeights.splice(index1, 1)[0]);
+        team2TotalScore += transferFunction1(team2[team2.length -1].sortedLanes[i]) * team2[team2.length - 1].skillScore;
+        }
       const newWeights = summonersWithScoresAndWeights.map(summoner => Math.max(0, summoner.lineWeights[i] || 0));
       console.log(`New Weights for index ${i} after selecting index1: ${newWeights}`);
       const index2 = weightedRandomSelection(newWeights);
+      if(i%2==0){
       team2.push(summonersWithScoresAndWeights.splice(index2, 1)[0]);
       team2TotalScore += transferFunction1(team2[team2.length -1].sortedLanes[i]) * team2[team2.length - 1].skillScore;
+      }
+      else{
+        team1.push(summonersWithScoresAndWeights.splice(index2, 1)[0]);
+        team1TotalScore += transferFunction1(team1[team1.length -1].sortedLanes[i]) * team1[team1.length - 1].skillScore;
+      }
     }
   }
 
