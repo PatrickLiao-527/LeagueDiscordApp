@@ -8,7 +8,7 @@ const handleRateLimit = async (error) => {
     if (error.response && error.response.status === 429) {
         const retryAfter = error.response.headers['retry-after'];
         const waitTime = (retryAfter ? parseInt(retryAfter, 10) : 120) * 1000; // Convert to milliseconds
-        //console.log(`Rate limit reached. Waiting for ${waitTime / 1000} seconds.`);
+        console.log(`Rate limit reached. Waiting for ${waitTime / 1000} seconds.`);
         await delay(waitTime);
     } else {
         throw error;
@@ -18,7 +18,7 @@ const handleRateLimit = async (error) => {
 const fetchSummonerData = async (gameName, tagLine) => {
     try {
         const url = `https://americas.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${gameName}/${tagLine}`;
-        //console.log(`Fetching summoner data from URL: ${url}`);
+        console.log(`Fetching summoner data from URL: ${url}`);
         await delay(1000); // Adding delay
         const response = await axios.get(url, {
             headers: {
@@ -36,27 +36,23 @@ const fetchSummonerData = async (gameName, tagLine) => {
 const fetchSummonerRank = async (summonerId) => {
     try {
         const url = `https://na1.api.riotgames.com/lol/league/v4/entries/by-summoner/${summonerId}`;
-        //console.log(`Fetching summoner rank from URL: ${url}`);
+        console.log(`Fetching summoner rank from URL: ${url}`);
         await delay(1000); // Adding delay
         const response = await axios.get(url, {
             headers: {
                 'X-Riot-Token': riotApiKey
             }
         });
-        //console.log(`Fetched summoner rank: ${JSON.stringify(response.data)}`);
+        console.log(`Fetched summoner rank: ${JSON.stringify(response.data)}`);
         const rankData = response.data;
         if (rankData.length > 0) {
             // Check if tier and rank fields exist
             const { tier, rank } = rankData[0];
             if (tier && rank) {
-                console.log("Summoner rank data is normal ------ ");
                 console.log(`Summoner rank data: ${tier} ${rank}`);
                 return `${tier} ${rank}`;
-            } else {
-                console.log(`Summoner rank data: ${tier} ${rank}`);
             }
         }
-        // Return 'Unranked' if tier or rank is missing
         console.log('Summoner is Unranked');
         return 'Unranked';
     } catch (error) {
@@ -68,7 +64,7 @@ const fetchSummonerRank = async (summonerId) => {
 const fetchTopChampions = async (puuid) => {
     try {
         const url = `https://na1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}`;
-        //console.log(`Fetching top champions from URL: ${url}`);
+        console.log(`Fetching top champions from URL: ${url}`);
         await delay(1000); // Adding delay
         const response = await axios.get(url, {
             headers: {
@@ -84,21 +80,70 @@ const fetchTopChampions = async (puuid) => {
 };
 
 const fetchMatchIds = async (puuid) => {
+    let allMatchIds = [];
+    let start = 0;
+    const count = 100; // Fetch in larger batches to reduce the number of requests
+
+    while (allMatchIds.length < 20) {
+        try {
+            const url = `https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=${start}&count=${count}`;
+            console.log(`Fetching match IDs from URL: ${url}`);
+            await delay(1000); // Adding delay
+            const response = await axios.get(url, {
+                headers: {
+                    'X-Riot-Token': riotApiKey
+                }
+            });
+            const matchIds = response.data;
+
+            if (matchIds.length === 0) break; // No more matches to fetch
+
+            const matchDetailsPromises = matchIds.map(id => fetchMatchDetails(id));
+            const matchDetails = await Promise.all(matchDetailsPromises);
+
+            const filteredMatchIds = matchDetails
+                .filter(match => match && (isRankedGame(match) || isNormalGame(match)))
+                .map(match => match.metadata.matchId);
+
+            allMatchIds = allMatchIds.concat(filteredMatchIds);
+
+            console.log(`Fetched match IDs: ${JSON.stringify(allMatchIds)}`);
+
+            start += count; // Increment the start for the next batch
+        } catch (error) {
+            await handleRateLimit(error);
+        }
+    }
+
+    // Prioritize ranked games
+    const rankedMatches = allMatchIds.filter(id => isRankedGame(id));
+    const normalMatches = allMatchIds.filter(id => isNormalGame(id));
+
+    return rankedMatches.concat(normalMatches).slice(0, 20);
+};
+
+const fetchMatchDetails = async (matchId) => {
     try {
-        const url = `https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?type=ranked&start=0&count=20`;
-        //console.log(`Fetching match IDs from URL: ${url}`);
+        const url = `https://americas.api.riotgames.com/lol/match/v5/matches/${matchId}`;
         await delay(1000); // Adding delay
         const response = await axios.get(url, {
             headers: {
                 'X-Riot-Token': riotApiKey
             }
         });
-        console.log(`Fetched match IDs: ${JSON.stringify(response.data)}`);
         return response.data;
     } catch (error) {
         await handleRateLimit(error);
-        return fetchMatchIds(puuid);
+        return fetchMatchDetails(matchId);
     }
+};
+
+const isRankedGame = (match) => {
+    return match.info.queueId === 420 || match.info.queueId === 440; // Summoner's Rift Ranked Solo/Duo or Flex
+};
+
+const isNormalGame = (match) => {
+    return match.info.queueId === 400 || match.info.queueId === 430; // Summoner's Rift Normal Blind or Draft
 };
 
 const fetchLaneCounts = async (matchIds, puuid) => {
@@ -112,7 +157,7 @@ const fetchLaneCounts = async (matchIds, puuid) => {
         };
         for (const matchId of matchIds) {
             const url = `https://americas.api.riotgames.com/lol/match/v5/matches/${matchId}`;
-            //console.log(`Fetching match details from URL: ${url}`);
+            console.log(`Fetching match details from URL: ${url}`);
             await delay(1000); // Adding delay
             const response = await axios.get(url, {
                 headers: {
@@ -120,7 +165,7 @@ const fetchLaneCounts = async (matchIds, puuid) => {
                 }
             });
             const matchDetails = response.data;
-           // console.log(`Fetched match details: ${JSON.stringify(matchDetails)}`);
+            console.log(`Fetched match details: ${JSON.stringify(matchDetails)}`);
             const participant = matchDetails.info.participants.find(p => p.puuid === puuid);
             const lane = participant.teamPosition.toLowerCase();
             if (lane && laneCounts.hasOwnProperty(lane)) {
@@ -148,7 +193,7 @@ const calculateWinRate = async (matchIds, puuid) => {
 
         for (const matchId of matchIds) {
             const url = `https://americas.api.riotgames.com/lol/match/v5/matches/${matchId}`;
-            //console.log(`Fetching match details from URL: ${url}`);
+            console.log(`Fetching match details from URL: ${url}`);
             await delay(1000); // Adding delay
             const matchDetailsResponse = await axios.get(url, {
                 headers: {
@@ -156,7 +201,7 @@ const calculateWinRate = async (matchIds, puuid) => {
                 }
             });
             const matchDetails = matchDetailsResponse.data;
-            //console.log(`Fetched match details: ${JSON.stringify(matchDetails)}`);
+            console.log(`Fetched match details: ${JSON.stringify(matchDetails)}`);
             const participant = matchDetails.info.participants.find(p => p.puuid === puuid);
             if (participant.win) {
                 wins++;
@@ -200,7 +245,7 @@ const calculateParticipantSkillScore = (participantRank) => {
         'GOLD IV': 13, 'GOLD III': 14, 'GOLD II': 15, 'GOLD I': 16,
         'PLATINUM IV': 17, 'PLATINUM III': 18, 'PLATINUM II': 19, 'PLATINUM I': 20,
         'EMERALD IV': 21, 'EMERALD III': 22, 'EMERALD II': 23, 'EMERALD I': 24,
-        'DIAMOND IVV': 25, 'DIAMOND III': 26, 'DIAMOND II': 27, 'DIAMOND I': 28, 
+        'DIAMOND IV': 25, 'DIAMOND III': 26, 'DIAMOND II': 27, 'DIAMOND I': 28, 
         'MASTER I': 29, 'GRANDMASTER I': 30, 'CHALLENGER I': 31, 'Unranked': 0
     };
 
