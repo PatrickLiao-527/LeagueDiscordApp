@@ -8,7 +8,7 @@ const handleRateLimit = async (error) => {
     if (error.response && error.response.status === 429) {
         const retryAfter = error.response.headers['retry-after'];
         const waitTime = (retryAfter ? parseInt(retryAfter, 10) : 120) * 1000; // Convert to milliseconds
-        console.log(`Rate limit reached. Waiting for ${waitTime / 1000} seconds.`);
+        //console.log(`Rate limit reached. Waiting for ${waitTime / 1000} seconds.`);
         await delay(waitTime);
     } else {
         throw error;
@@ -18,7 +18,7 @@ const handleRateLimit = async (error) => {
 const fetchSummonerData = async (gameName, tagLine) => {
     try {
         const url = `https://americas.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${gameName}/${tagLine}`;
-        console.log(`Fetching summoner data from URL: ${url}`);
+        //console.log(`Fetching summoner data from URL: ${url}`);
         await delay(1000); // Adding delay
         const response = await axios.get(url, {
             headers: {
@@ -36,14 +36,14 @@ const fetchSummonerData = async (gameName, tagLine) => {
 const fetchSummonerRank = async (summonerId) => {
     try {
         const url = `https://na1.api.riotgames.com/lol/league/v4/entries/by-summoner/${summonerId}`;
-        console.log(`Fetching summoner rank from URL: ${url}`);
+        //console.log(`Fetching summoner rank from URL: ${url}`);
         await delay(1000); // Adding delay
         const response = await axios.get(url, {
             headers: {
                 'X-Riot-Token': riotApiKey
             }
         });
-        console.log(`Fetched summoner rank: ${JSON.stringify(response.data)}`);
+        //console.log(`Fetched summoner rank: ${JSON.stringify(response.data)}`);
         const rankData = response.data;
         if (rankData.length > 0) {
             // Check if tier and rank fields exist
@@ -68,7 +68,7 @@ const fetchSummonerRank = async (summonerId) => {
 const fetchTopChampions = async (puuid) => {
     try {
         const url = `https://na1.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}`;
-        console.log(`Fetching top champions from URL: ${url}`);
+        //console.log(`Fetching top champions from URL: ${url}`);
         await delay(1000); // Adding delay
         const response = await axios.get(url, {
             headers: {
@@ -86,7 +86,7 @@ const fetchTopChampions = async (puuid) => {
 const fetchMatchIds = async (puuid) => {
     try {
         const url = `https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?type=ranked&start=0&count=20`;
-        console.log(`Fetching match IDs from URL: ${url}`);
+        //console.log(`Fetching match IDs from URL: ${url}`);
         await delay(1000); // Adding delay
         const response = await axios.get(url, {
             headers: {
@@ -112,7 +112,7 @@ const fetchLaneCounts = async (matchIds, puuid) => {
         };
         for (const matchId of matchIds) {
             const url = `https://americas.api.riotgames.com/lol/match/v5/matches/${matchId}`;
-            console.log(`Fetching match details from URL: ${url}`);
+            //console.log(`Fetching match details from URL: ${url}`);
             await delay(1000); // Adding delay
             const response = await axios.get(url, {
                 headers: {
@@ -120,7 +120,7 @@ const fetchLaneCounts = async (matchIds, puuid) => {
                 }
             });
             const matchDetails = response.data;
-            console.log(`Fetched match details: ${JSON.stringify(matchDetails)}`);
+           // console.log(`Fetched match details: ${JSON.stringify(matchDetails)}`);
             const participant = matchDetails.info.participants.find(p => p.puuid === puuid);
             const lane = participant.teamPosition.toLowerCase();
             if (lane && laneCounts.hasOwnProperty(lane)) {
@@ -148,7 +148,7 @@ const calculateWinRate = async (matchIds, puuid) => {
 
         for (const matchId of matchIds) {
             const url = `https://americas.api.riotgames.com/lol/match/v5/matches/${matchId}`;
-            console.log(`Fetching match details from URL: ${url}`);
+            //console.log(`Fetching match details from URL: ${url}`);
             await delay(1000); // Adding delay
             const matchDetailsResponse = await axios.get(url, {
                 headers: {
@@ -156,7 +156,7 @@ const calculateWinRate = async (matchIds, puuid) => {
                 }
             });
             const matchDetails = matchDetailsResponse.data;
-            console.log(`Fetched match details: ${JSON.stringify(matchDetails)}`);
+            //console.log(`Fetched match details: ${JSON.stringify(matchDetails)}`);
             const participant = matchDetails.info.participants.find(p => p.puuid === puuid);
             if (participant.win) {
                 wins++;

@@ -4,30 +4,42 @@ const axios = require('axios');
 const riotApiKey = process.env.RIOT_API_KEY;
 
 const updateSortedLanesAndMasteryScoreForSummoner = async (summoner) => {
-    const matchIds = await fetchMatchIds(summoner.puuid);
-    const laneCounts = await fetchLaneCounts(matchIds, summoner.puuid);
-    const sortedLanes = [
-        laneCounts.top || 0,
-        laneCounts.jungle || 0,
-        laneCounts.middle || 0,
-        laneCounts.bottom || 0,
-        laneCounts.utility || 0
-    ];
+    try {
+        const matchIds = await fetchMatchIds(summoner.puuid);
+        console.log(`Match IDs for ${summoner.puuid}:`, matchIds);  // Log match IDs
 
-    summoner.sortedLanes = sortedLanes;
+        const laneCounts = await fetchLaneCounts(matchIds, summoner.puuid);
+        console.log(`Lane Counts for ${summoner.puuid}:`, laneCounts);  // Log lane counts
 
-    if (!summoner.masteryScore) {
-        const masteryData = await fetchTopChampions(summoner.puuid);
-        const masteryScore = await axios.get(`https://na1.api.riotgames.com/lol/champion-mastery/v4/scores/by-puuid/${summoner.puuid}`, {
-            headers: {
-                'X-Riot-Token': riotApiKey
-            }
-        });
-        summoner.masteryData = masteryData;
-        summoner.masteryScore = masteryScore.data;
+        const sortedLanes = [
+            laneCounts[0] || 0, // top
+            laneCounts[1] || 0, // jungle
+            laneCounts[2] || 0, // middle
+            laneCounts[3] || 0, // bottom
+            laneCounts[4] || 0  // utility
+        ];
+        console.log(`Sorted Lanes for ${summoner.puuid}:`, sortedLanes);  // Log sorted lanes
+
+        summoner.sortedLanes = sortedLanes;
+
+        if (!summoner.masteryScore) {
+            const masteryData = await fetchTopChampions(summoner.puuid);
+            const masteryScore = await axios.get(`https://na1.api.riotgames.com/lol/champion-mastery/v4/scores/by-puuid/${summoner.puuid}`, {
+                headers: {
+                    'X-Riot-Token': riotApiKey
+                }
+            });
+            summoner.masteryData = masteryData;
+            summoner.masteryScore = masteryScore.data;
+            console.log(`Mastery Data for ${summoner.puuid}:`, masteryData);  // Log mastery data
+            console.log(`Mastery Score for ${summoner.puuid}:`, masteryScore.data);  // Log mastery score
+        }
+
+        await summoner.save();
+        console.log(`Summoner ${summoner.puuid} saved successfully.`);
+    } catch (error) {
+        console.error(`Error updating summoner ${summoner.puuid}:`, error);
     }
-
-    await summoner.save();
 };
 
 module.exports = {
