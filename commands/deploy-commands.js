@@ -34,7 +34,7 @@ const commands = [
     {
         name: 'bias',
         description: 'Create a bias on your performance'
-    }
+    },
 ];
 
 const rest = new REST({ version: '9' }).setToken(process.env.DISCORD_BOT_TOKEN);

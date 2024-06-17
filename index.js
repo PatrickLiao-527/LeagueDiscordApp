@@ -28,7 +28,8 @@ const removeHandler = require('./commands/remove');
 const helpHandler = require('./commands/help');
 const showCommand = require('./commands/show');
 const queueCommand = require('./commands/queue');
-const biasHandler = require('./commands/bias')
+const biasHandler = require('./commands/bias');
+const updateSortedLanesHandler = require('./commands/updateSortedLanes'); // Import the new command
 
 // Collection to hold commands
 client.commands = new Collection();
@@ -40,9 +41,18 @@ client.commands.set('queue', queueCommand);
 client.commands.set('match', matchHandler);
 client.commands.set('members', membersHandler);
 client.commands.set('bias', biasHandler);
+client.commands.set('update_sorted_lanes', updateSortedLanesHandler); // Add the new command
 
-client.once('ready', () => {
+client.once('ready', async () => {
     console.log('Bot is online!');
+    
+    // Call the function to update all summoners' sortedLanes
+    try {
+        await updateSortedLanesHandler.updateAllSummoners();
+        console.log('Updated sortedLanes for all summoners.');
+    } catch (error) {
+        console.error('Error updating sortedLanes for summoners:', error);
+    }
 });
 
 client.on('interactionCreate', async interaction => {

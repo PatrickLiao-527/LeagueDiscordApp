@@ -70,7 +70,7 @@ const processRegistrationQueue = async () => {
         }
         realRank = realRank / count;
 
-        const sortedLanes = Object.entries(laneCounts).sort(([, a], [, b]) => b - a).map(([lane]) => lane).slice(0, 5);
+        const sortedLanes = laneCounts;
 
         const championList = masteryData.map(champion => `${championIdToName[champion.championId] || 'Unknown Champion'} [Level ${champion.championLevel}]`).join(', ');
 
@@ -81,7 +81,7 @@ const processRegistrationQueue = async () => {
             return result;
         }
 
-        const skillScore = realRank + transferFunction1(masteryScore.data/100) * 20 + winRate / 10;
+        const skillScore = realRank + transferFunction1(masteryScore.data / 100) * 20 + winRate / 10;
 
         const summoner = new Summoner({
             discordId: interaction.user.id,
@@ -111,6 +111,7 @@ const processRegistrationQueue = async () => {
         processRegistrationQueue(); // Process the next user in the queue
     }
 };
+
 
 const displayQueue = (channel) => {
     const queueList = registerQueue.map((entry, index) => `${index + 1}. ${entry.interaction.user.username}`).join('\n');

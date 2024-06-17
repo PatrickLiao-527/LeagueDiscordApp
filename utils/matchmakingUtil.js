@@ -56,13 +56,23 @@ function weightedRandomSelection(weights) {
   return weights.length - 1;
 }
 
+function convertToPlainObject(summoner) {
+  if (typeof summoner.toObject === 'function') {
+    return summoner.toObject();
+  }
+  return summoner;
+}
+
 function matchmaking(summoners) {
   if (summoners.length !== 10) {
     throw new Error('The list of summoners must have a length of 10.');
   }
 
+  // Convert all summoners to plain objects
+  const plainSummoners = summoners.map(convertToPlainObject);
+
   // Calculate line skill scores and line weights for each summoner
-  const summonersWithScoresAndWeights = calculateLineSkillScores(summoners.map(summoner => summoner.toObject()));
+  const summonersWithScoresAndWeights = calculateLineSkillScores(plainSummoners);
 
   console.log('Summoners with Scores and Weights:', JSON.stringify(summonersWithScoresAndWeights, null, 2));
 
@@ -100,7 +110,8 @@ function matchmaking(summoners) {
     console.error('Max attempts reached, exiting loop to prevent infinite execution.');
   }
 
-  console.log('Final Teams:', { team1, team2 });
+  // Print detailed team information
+  console.log('Final Teams:', JSON.stringify({ team1, team2, team1TotalScore, team2TotalScore }, null, 2));
   return { team1, team2, team1TotalScore, team2TotalScore };
 }
 
