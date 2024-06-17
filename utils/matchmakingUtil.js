@@ -1,6 +1,6 @@
 function transferFunction1(x) {
   console.log(`transferFunction1 input: ${x}`);
-  const result = (Math.log(0.4 * (x + 0.3)) + 10.88);
+  const result = (Math.log(0.6 * (x + 0.3)) + 0.8)/2;
   console.log(`transferFunction1 output: ${result}`);
   return result;
 }
