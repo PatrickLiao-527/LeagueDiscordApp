@@ -85,7 +85,7 @@ const fetchTopChampions = async (puuid) => {
 
 const fetchMatchIds = async (puuid) => {
     try {
-        const url = `https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?type=ranked&start=0&count=10`;
+        const url = `https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?type=ranked&start=0&count=20`;
         console.log(`Fetching match IDs from URL: ${url}`);
         await delay(1000); // Adding delay
         const response = await axios.get(url, {
@@ -103,7 +103,13 @@ const fetchMatchIds = async (puuid) => {
 
 const fetchLaneCounts = async (matchIds, puuid) => {
     try {
-        const laneCounts = {};
+        const laneCounts = {
+            top: 0,
+            jungle: 0,
+            middle: 0,
+            bottom: 0,
+            utility: 0
+        };
         for (const matchId of matchIds) {
             const url = `https://americas.api.riotgames.com/lol/match/v5/matches/${matchId}`;
             console.log(`Fetching match details from URL: ${url}`);
@@ -117,12 +123,18 @@ const fetchLaneCounts = async (matchIds, puuid) => {
             console.log(`Fetched match details: ${JSON.stringify(matchDetails)}`);
             const participant = matchDetails.info.participants.find(p => p.puuid === puuid);
             const lane = participant.teamPosition.toLowerCase();
-            if (lane && ['top', 'jungle', 'middle', 'bottom', 'utility'].includes(lane)) {
-                laneCounts[lane] = (laneCounts[lane] || 0) + 1;
+            if (lane && laneCounts.hasOwnProperty(lane)) {
+                laneCounts[lane] += 1;
             }
         }
         console.log(`Lane counts: ${JSON.stringify(laneCounts)}`);
-        return laneCounts;
+        return [
+            laneCounts.top,
+            laneCounts.jungle,
+            laneCounts.middle,
+            laneCounts.bottom,
+            laneCounts.utility
+        ];
     } catch (error) {
         await handleRateLimit(error);
         return fetchLaneCounts(matchIds, puuid);

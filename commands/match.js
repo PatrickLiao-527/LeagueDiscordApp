@@ -7,7 +7,7 @@ const { championIdToName, fetchChampionData } = require('../utils/championIdToNa
 let matchInProgress = false;
 let queue = [];
 const lanes = ["Top", "Jungle", "Mid", "Bot", "Support"];
-const teamNames = ["The Destroyers", "The Unstoppables", "The Legends", "The Dominators", "The Victors"];
+const teamNames = ["姐姐履高跟踩吾之卵其痛虽难忍但爽于心", "落地率先倒地，激发队友潜力", "理塘最強伝説と絕兇の猛虎！純真丁一郎です！", "24岁，是伞兵", "大司马小队"];
 
 const getRandomTeamName = () => {
     return teamNames[Math.floor(Math.random() * teamNames.length)];
